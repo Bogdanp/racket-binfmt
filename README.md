@@ -1,6 +1,6 @@
 # binfmt
 
-A binary format parser generator DSL with limited support for limited
+A binary format parser generator DSL with support for limited
 context-sensitivity.
 
 ## License
