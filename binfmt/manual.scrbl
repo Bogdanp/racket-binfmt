@@ -1,13 +1,14 @@
 #lang scribble/manual
 
-@(require (for-label binfmt
+@(require scribble/bnf
+          (for-label binfmt
                      binfmt/runtime
                      racket/base
                      racket/contract))
 
 @title{@tt{binfmt}: binary format parser generator}
 @author[(author+email "Bogdan Popa" "bogdan@defn.io")]
-@defmodule[binfmt]
+@defmodulelang[binfmt]
 
 This package provides a @hash-lang[] for building binary format
 parsers with support for limited context-sensitivity.
@@ -39,6 +40,32 @@ to parse it:
 ]
 
 @section{Reference}
+@subsection{Grammar}
+
+The grammar for @racketmodname[binfmt] is as follows:
+
+@BNF[
+  (list @nonterm{def}
+        @BNF-seq[@nonterm{alt} @kleenestar[@BNF-group[@litchar{|} @nonterm{alt}]] @litchar{;}])
+  (list @nonterm{alt}
+        @kleeneplus{expr})
+  (list @nonterm{expr}
+        @nonterm{term}
+        @BNF-seq[@nonterm{term} @litchar{*}]
+        @BNF-seq[@nonterm{term} @litchar{+}]
+        @BNF-seq[@nonterm{term} @litchar["{"] @BNF-alt[@nonterm{id} @nonterm{natural}] @litchar["}"]])
+  (list @nonterm{term}
+        @nonterm{char}
+        @nonterm{id})
+  (list @nonterm{id}
+        @elem{any identifier})
+  (list @nonterm{char}
+        @BNF-seq[@litchar{'} @elem{ascii character} @litchar{'}])
+  (list @nonterm{natural}
+        @elem{any natural number})
+]
+
+@subsection{Runtime}
 @defmodule[binfmt/runtime]
 
 @defparam[current-endianness endiannes (or/c 'big 'little) #:value (if (system-big-endian?) 'big 'litte)]{

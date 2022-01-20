@@ -46,8 +46,8 @@
      (define sub (stx l (expect 'parse-expr l '(ident integer))))
      (void (expect 'parse-expr l 'rbrace))
      (stx l t `(repeat ,e ,sub))]
-    [(and t (token 'times _ _ _ _))
-     (begin0 (stx l t `(times ,e))
+    [(and t (token 'star _ _ _ _))
+     (begin0 (stx l t `(star ,e))
        (lexer-read l))]
     [(and t (token 'plus _ _ _ _))
      (begin0 (stx l t `(plus ,e))

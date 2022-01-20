@@ -101,10 +101,10 @@
         (make-err in "context var ~a contains ~a, which is not a positive integer" id v)]
        [_
         (make-err in "failed to look up ~a from context" id)])]
-    [`(times ,e)
-     (parse-times in table e context)]
     [`(plus ,e)
      (parse-plus in table e context)]
+    [`(star ,e)
+     (parse-star in table e context)]
     [_
      (make-err in "invalid parser expression ~s" expr)]))
 
@@ -123,7 +123,7 @@
          [else
           (loop (cons (ok-v res) results) (sub1 n))])])))
 
-(define (parse-times in table expr context)
+(define (parse-star in table expr context)
   (let loop ([results null])
     (define pos (file-position in))
     (define res (parse-expr in table expr context))
@@ -137,7 +137,7 @@
 (define (parse-plus in table expr context)
   (define res (parse-expr in table expr context))
   (if (ok? res)
-      (ok (cons res (parse-times in table expr)))
+      (ok (cons res (parse-star in table expr)))
       res))
 
 (define (parse-char in ch)

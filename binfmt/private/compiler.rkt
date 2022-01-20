@@ -18,9 +18,9 @@
   (pattern ({~datum repeat} sub-e:exp id-e:exp)
            #:with id #'sub-e.id
            #:with e #'`(repeat ,sub-e.e ,id-e.e))
-  (pattern ({~datum times} sub-e:exp)
+  (pattern ({~datum star} sub-e:exp)
            #:with id #'sub-e.id
-           #:with e #'`(times ,sub-e.e))
+           #:with e #'`(star ,sub-e.e))
   (pattern ({~datum plus} sub-e:exp)
            #:with id #'sub-e.id
            #:with e #'`(plus ,sub-e.e)))

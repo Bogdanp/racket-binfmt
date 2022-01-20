@@ -48,7 +48,7 @@
      (do-lexer-read l)]
     [#\; (make-token 'semicolon (read-char in))]
     [#\= (make-token 'equal     (read-char in))]
-    [#\* (make-token 'times     (read-char in))]
+    [#\* (make-token 'star      (read-char in))]
     [#\+ (make-token 'plus      (read-char in))]
     [#\| (make-token 'pipe      (read-char in))]
     [#\{ (make-token 'lbrace    (read-char in))]
