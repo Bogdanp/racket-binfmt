@@ -56,8 +56,15 @@
     [#\' (make-token 'char      (read-literal-char in))]
     [(app char-general-category (or 'll 'lu))
      (make-token 'ident (read-ident in))]
+    [(app char-general-category 'nd)
+     (make-token 'integer (read-integer in))]
     [_
      (oops! 'lexer-read (format "unexpected char ~s" (read-char in)) in line col pos)]))
+
+(define (read-literal-char in)
+  (expect 'read-literal-char in #\')
+  (begin0 (read-char in)
+    (expect 'read-literal-char in #\')))
 
 (define (read-ident in)
   (string->symbol
@@ -72,13 +79,24 @@
            (loop)]
           [_ (void)]))))))
 
-(define (read-literal-char in)
-  (expect 'read-literal-char in #\')
-  (begin0 (read-char in)
-    (expect 'read-literal-char in #\')))
+(define (read-integer in)
+  (cond
+    [(char=? (peek-char in) #\0)
+     (begin0 0
+       (void (read-char in)))]
+    [else
+     (let loop ([n (char->digit (read-char in))])
+       (match (peek-char in)
+         [(? eof-object?) n]
+         [(app char-general-category 'nd)
+          (loop (+ (* n 10) (char->digit (read-char in))))]
+         [_ n]))]))
 
 (define (expect who in expected)
   (define actual (peek-char in))
   (unless (char=? actual expected)
     (oops! who (format "expected ~a but found ~a" expected actual) in))
   (void (read-char in)))
+
+(define (char->digit c)
+  (- (char->integer c) 48))

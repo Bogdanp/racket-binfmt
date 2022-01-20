@@ -43,9 +43,9 @@
   (match (lexer-peek l)
     [(and t (token 'lbrace _ _ _ _))
      (void (expect 'parse-expr l 'lbrace))
-     (define id (stx l (expect 'parse-expr l 'ident)))
+     (define sub (stx l (expect 'parse-expr l '(ident integer))))
      (void (expect 'parse-expr l 'rbrace))
-     (stx l t `(repeat ,e ,id))]
+     (stx l t `(repeat ,e ,sub))]
     [(and t (token 'times _ _ _ _))
      (begin0 (stx l t `(times ,e))
        (lexer-read l))]

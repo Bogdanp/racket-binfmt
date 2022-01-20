@@ -7,6 +7,9 @@
  compile)
 
 (define-syntax-class exp
+  (pattern n:number
+           #:with id #'num
+           #:with e #'n)
   (pattern ch:char
            #:with id #'char
            #:with e #'ch)

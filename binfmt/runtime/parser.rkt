@@ -91,8 +91,16 @@
      (cond
        [(hash-ref table expr #f) => (λ (p) (p in))]
        [else (make-err in "parser '~a' not defined" expr)])]
+    [`(repeat ,e ,(? exact-nonnegative-integer? n))
+     (parse-repeat in table e n context)]
     [`(repeat ,e ,id)
-     (parse-repeat in table e id context)]
+     (match (assq id context)
+       [(cons _ (? exact-nonnegative-integer? n))
+        (parse-repeat in table e n context)]
+       [(cons _ v)
+        (make-err in "context var ~a contains ~a, which is not a positive integer" id v)]
+       [_
+        (make-err in "failed to look up ~a from context" id)])]
     [`(times ,e)
      (parse-times in table e context)]
     [`(plus ,e)
@@ -100,26 +108,20 @@
     [_
      (make-err in "invalid parser expression ~s" expr)]))
 
-(define (parse-repeat in table expr n-id context)
-  (match (assq n-id context)
-    [(cons _ (? exact-nonnegative-integer? n))
-     (let loop ([results null]
-                [n n])
+(define (parse-repeat in table expr n context)
+  (let loop ([results null] [n n])
+    (cond
+      [(zero? n)
+       (ok (reverse results))]
+      [else
+       (define pos (file-position in))
+       (define res (parse-expr in table expr context))
        (cond
-         [(zero? n) (ok (reverse results))]
+         [(err? res)
+          (begin0 res
+            (file-position in pos))]
          [else
-          (define pos (file-position in))
-          (define res (parse-expr in table expr context))
-          (cond
-            [(err? res)
-             (begin0 res
-               (file-position in pos))]
-            [else
-             (loop (cons (ok-v res) results) (sub1 n))])]))]
-    [(cons _ v)
-     (make-err in "context var ~a contains ~a, which is not a positive integer" n-id v)]
-    [_
-     (make-err in "failed to look up ~a from context" n-id)]))
+          (loop (cons (ok-v res) results) (sub1 n))])])))
 
 (define (parse-times in table expr context)
   (let loop ([results null])
