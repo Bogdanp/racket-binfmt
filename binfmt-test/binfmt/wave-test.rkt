@@ -1,15 +1,11 @@
 #lang racket/base
 
-(require binfmt/runtime
-         rackunit
+(require rackunit
          "common.rkt"
          "wave.b")
 
 ;; https://freesound.org/people/-zin-/sounds/32158/
-(define r
-  (call-with-input-file "wave.wav"
-    (parameterize ([current-endianness 'little])
-      wave)))
+(define r (call-with-input-file "wave.wav" wave))
 (define fmt (ref 'fmt_1 r))
 (define data (ref 'data_1 r))
 

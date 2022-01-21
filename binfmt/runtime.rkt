@@ -6,5 +6,4 @@
     (provide (all-from-out mod ...))))
 
 (reprovide
- "runtime/endianness.rkt"
  "runtime/parser.rkt")

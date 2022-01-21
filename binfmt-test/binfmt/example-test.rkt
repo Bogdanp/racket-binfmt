@@ -1,14 +1,10 @@
 #lang racket/base
 
-(require binfmt/runtime
-         rackunit
+(require rackunit
          "common.rkt"
          "example.b")
 
-(define b
-  (parameterize ([current-endianness 'big])
-    (call-with-input-file "example.dat" batch)))
-
+(define b (call-with-input-file "example.dat" batch))
 (define h
   (ref 'header_1 b))
 (check-equal?
