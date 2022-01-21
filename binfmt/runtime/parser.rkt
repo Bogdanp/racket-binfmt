@@ -151,12 +151,10 @@
        (loop (cons (ok-v res) results))])))
 
 (define (parse-plus in table expr context)
-  (define res
-    (parse-expr in table expr context))
-  (if (ok? res)
-      (ok (cons (ok-v res)
-                (ok-v (parse-star in table expr context))))
-      res))
+  (res-bind
+   (parse-expr in table expr context)
+   (lambda (v)
+     (ok (cons v (ok-v (parse-star in table expr context)))))))
 
 (define (parse-char in ch)
   (match (read-byte in)
@@ -190,11 +188,11 @@
 (define parse-f64be (make-parse-flt 'f64 8 #t))
 
 (define ((make-parse-byte who signed?) in)
+  (define n (read-byte in))
   (cond
-    [(eof-object? (peek-byte in))
+    [(eof-object? n)
      (make-err in "expected '~a' but found EOF" who)]
     [else
-     (define n (read-byte in))
      (ok (if (and signed? (> n 127)) (- n 256) n))]))
 
 (define parse-u8 (make-parse-byte 'u8 #f))
