@@ -75,7 +75,7 @@ based on its @nonterm{id}: the first time an @nonterm{id} appers in an
 alt, @litchar{_1} is appended to its name, the second time
 @litchar{_2}, and so on.
 
-Alternatives containing 2 ore more @nonterm{expr}s parse to an
+Alternatives containing two or more @nonterm{expr}s parse to an
 association list mapping @nonterm{expr} names (as defined above) to
 parse results.  Alternatives containing a single @nonterm{expr}
 collapse to the result of the @nonterm{expr}.
