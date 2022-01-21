@@ -37,7 +37,8 @@
      (i8  . ,parse-i8)
      (i16 . ,parse-i16)
      (i32 . ,parse-i32)
-     (i64 . ,parse-i64))))
+     (i64 . ,parse-i64)
+     (nul . ,parse-nul))))
 
 (define ((make-parser table . alts) in)
   (parse-alts in table alts))
@@ -135,9 +136,11 @@
        (loop (cons (ok-v res) results))])))
 
 (define (parse-plus in table expr context)
-  (define res (parse-expr in table expr context))
+  (define res
+    (parse-expr in table expr context))
   (if (ok? res)
-      (ok (cons res (parse-star in table expr)))
+      (ok (cons (ok-v res)
+                (ok-v (parse-star in table expr context))))
       res))
 
 (define (parse-char in ch)
@@ -176,6 +179,12 @@
 (define parse-i16 (make-parse-int 'i16 #t 2))
 (define parse-i32 (make-parse-int 'i32 #t 4))
 (define parse-i64 (make-parse-int 'i64 #t 8))
+
+(define (parse-nul in)
+  (match (peek-byte in)
+    [0 (ok (read-byte in))]
+    [(? eof-object?) (make-err in "expected NUL but found EOF")]
+    [n (make-err in "expected NUL but found '~a'" n)]))
 
 (struct ok (v) #:transparent)
 (struct err (message) #:transparent)
