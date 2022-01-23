@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/match
+(require racket/format
+         racket/match
          racket/port)
 
 (provide
@@ -98,6 +99,8 @@
 
 (define (parse-expr in table expr [context null])
   (match expr
+    [(? byte?)
+     (parse-byte in expr)]
     [(? char?)
      (parse-char in expr)]
     [(? symbol?)
@@ -156,6 +159,15 @@
    (parse-expr in table expr context)
    (lambda (v)
      (ok (cons v (ok-v (parse-star in table expr context)))))))
+
+(define (~byte n)
+  (~a "0x" (~r #:base 16 #:min-width 2 #:pad-string "0" n)))
+
+(define (parse-byte in n)
+  (match (read-byte in)
+    [(== n) (ok n)]
+    [(? eof-object?) (make-err in "expected ~a but found EOF" (~byte n))]
+    [b (make-err in "expected ~a but found ~a" (~byte n) (~byte b))]))
 
 (define (parse-char in ch)
   (match (read-byte in)

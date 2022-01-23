@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/match
+(require racket/format
+         racket/match
          "error.rkt"
          "lexer.rkt")
 
@@ -38,7 +39,14 @@
       [_ (loop (cons (parse-expr l) exprs))])))
 
 (define (parse-expr l)
-  (define t (expect 'parse-expr l '(ident char)))
+  (define t
+    (match (expect 'parse-expr l '(ident char integer))
+      [(token 'integer (? (compose1 not byte?) b) _ _ _)
+       (oops! 'parse-expr
+              (format "byte values must be between 0x00 and 0xFF~n got: 0x~a (decimal ~a)"
+                      (~r #:base 16 #:min-width 2 #:pad-string "0" b) b)
+              (lexer-in l))]
+      [t t]))
   (define e (stx l t))
   (match (lexer-peek l)
     [(and t (token 'lbrace _ _ _ _))

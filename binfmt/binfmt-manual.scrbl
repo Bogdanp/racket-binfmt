@@ -60,8 +60,11 @@ The grammar for @racketmodname[binfmt] is as follows:
   (list @nonterm{repeat}
         @BNF-seq[@nonterm{term} @litchar["{"] @BNF-alt[@nonterm{id} @nonterm{natural}] @litchar["}"]])
   (list @nonterm{term}
+        @nonterm{byte}
         @nonterm{char}
         @nonterm{id})
+  (list @nonterm{byte}
+        @elem{an integer between @litchar{0x00} and @litchar{0xFF}})
   (list @nonterm{char}
         @BNF-seq[@litchar{'} @elem{ascii character} @litchar{'}])
   (list @nonterm{id}
