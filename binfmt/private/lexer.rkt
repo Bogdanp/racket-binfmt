@@ -62,9 +62,9 @@
      (oops! 'lexer-read (format "unexpected char ~s" (read-char in)) in line col pos)]))
 
 (define (read-literal-char in)
-  (expect 'read-literal-char in #\')
+  (consume 'read-literal-char in #\')
   (begin0 (read-char in)
-    (expect 'read-literal-char in #\')))
+    (consume 'read-literal-char in #\')))
 
 (define (read-ident in)
   (string->symbol
@@ -81,30 +81,24 @@
 
 (define (read-integer in)
   (cond
-    [(string=? (peek-string 2 0 in) "0x")
+    [(equal? (peek-string 2 0 in) "0x")
      (void (read-string 2 in))
-     (let loop ([n #f])
-       (match (peek-char in)
-         [(? eof-object?)
-          (if n n (oops! 'read-integer "expected a hex character but found EOF" in))]
-         [(? hex-digit?)
-          (loop (+ (* (or n 0) 16) (hex-char->number (read-char in))))]
-         [_ n]))]
-    [(char=? (peek-char in) #\0)
+     (do-read-integer in 16 hex-digit? hex-char->number)]
+    [(equal? (peek-char in) #\0)
      (begin0 0
        (void (read-char in)))]
     [else
-     (let loop ([n (char->digit (read-char in))])
-       (match (peek-char in)
-         [(? eof-object?) n]
-         [(? digit?) (loop (+ (* n 10) (char->digit (read-char in))))]
-         [_ n]))]))
+     (do-read-integer in 10 digit? char->digit)]))
 
-(define (expect who in expected)
-  (define actual (peek-char in))
-  (unless (char=? actual expected)
-    (oops! who (format "expected ~a but found ~a" expected actual) in))
-  (void (read-char in)))
+(define (do-read-integer in base digit? char->digit)
+  (define first-ch (read-char in))
+  (when (eof-object? first-ch)
+    (oops! 'read-integer "expected a digit but found EOF" in))
+  (let loop ([n (char->digit first-ch)])
+    (match (peek-char in)
+      [(? eof-object?) n]
+      [(? digit?) (loop (+ (* n base) (char->digit (read-char in))))]
+      [_ n])))
 
 (define (digit? c)
   (memv c '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)))
@@ -122,3 +116,9 @@
         [(#\A #\B #\C #\D #\E #\F) (- (char->integer c) 55)]
         [(#\a #\b #\c #\d #\e #\f) (- (char->integer c) 87)]
         [else (raise-argument-error 'hex-char->number "hex-digit?" c)])))
+
+(define (consume who in expected)
+  (define actual (peek-char in))
+  (unless (char=? actual expected)
+    (oops! who (format "expected ~a but found ~a" expected actual) in))
+  (void (read-char in)))
