@@ -81,6 +81,15 @@
 
 (define (read-integer in)
   (cond
+    [(string=? (peek-string 2 0 in) "0x")
+     (void (read-string 2 in))
+     (let loop ([n #f])
+       (match (peek-char in)
+         [(? eof-object?)
+          (if n n (oops! 'read-integer "expected a hex character but found EOF" in))]
+         [(? hex-digit?)
+          (loop (+ (* (or n 0) 16) (hex-char->number (read-char in))))]
+         [_ n]))]
     [(char=? (peek-char in) #\0)
      (begin0 0
        (void (read-char in)))]
@@ -88,8 +97,7 @@
      (let loop ([n (char->digit (read-char in))])
        (match (peek-char in)
          [(? eof-object?) n]
-         [(app char-general-category 'nd)
-          (loop (+ (* n 10) (char->digit (read-char in))))]
+         [(? digit?) (loop (+ (* n 10) (char->digit (read-char in))))]
          [_ n]))]))
 
 (define (expect who in expected)
@@ -98,5 +106,19 @@
     (oops! who (format "expected ~a but found ~a" expected actual) in))
   (void (read-char in)))
 
+(define (digit? c)
+  (memv c '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)))
+
 (define (char->digit c)
   (- (char->integer c) 48))
+
+(define (hex-digit? c)
+  (or (digit? c) (memv c '(#\A #\B #\C #\D #\E #\F #\a #\b #\c #\d #\e #\f))))
+
+(define (hex-char->number c)
+  (if (digit? c)
+      (char->digit c)
+      (case c
+        [(#\A #\B #\C #\D #\E #\F) (- (char->integer c) 55)]
+        [(#\a #\b #\c #\d #\e #\f) (- (char->integer c) 87)]
+        [else (raise-argument-error 'hex-char->number "hex-digit?" c)])))

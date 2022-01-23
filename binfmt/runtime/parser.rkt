@@ -101,7 +101,8 @@
     [(? char?)
      (parse-char in expr)]
     [(? symbol?)
-     (define parser (hash-ref table expr #f))
+     (define parser
+       (hash-ref table expr #f))
      (if parser
          (parser in)
          (make-err in "parser '~a' not defined" expr))]
