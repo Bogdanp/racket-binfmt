@@ -46,6 +46,9 @@
     [(or #\space #\tab #\return #\newline)
      (read-char in)
      (do-lexer-read l)]
+    [#\#
+     (read-line in)
+     (do-lexer-read l)]
     [#\; (make-token 'semicolon (read-char in))]
     [#\= (make-token 'equal     (read-char in))]
     [#\* (make-token 'star      (read-char in))]
