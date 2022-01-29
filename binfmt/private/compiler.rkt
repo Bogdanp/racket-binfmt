@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require syntax/parse
+(require racket/syntax
+         syntax/parse
          "parser.rkt")
 
 (provide
@@ -31,6 +32,7 @@
 
 (define-syntax-class def
   (pattern ({~datum def} id (({~datum alt} alt:alt) ...))
+           #:with unid (format-id #'id "un-~a" #'id)
            #:with (alt-e ...) #'(alt.e ...)))
 
 (define (compile in)
@@ -40,5 +42,8 @@
          (require (prefix-in r: binfmt/runtime))
          (define *parsers* (r:make-parser-table))
          (hash-set! *parsers* 'd.id (r:make-parser *parsers* d.alt-e ...)) ...
-         (define (d.id in) (r:parse *parsers* 'd.id in)) ...
-         (provide d.id ...))]))
+         (define *unparsers* (r:make-unparser-table))
+         (hash-set! *unparsers* 'd.id (r:make-unparser *unparsers* d.alt-e ...)) ...
+         (define (d.id [in (current-input-port)]) (r:parse *parsers* 'd.id in)) ...
+         (define (d.unid v [out (current-output-port)]) (r:unparse *unparsers* 'd.id out v)) ...
+         (provide d.id ... d.unid ...))]))

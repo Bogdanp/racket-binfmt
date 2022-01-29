@@ -2,28 +2,23 @@
 
 (require racket/format
          racket/match
-         racket/port)
+         racket/port
+         "name.rkt"
+         "res.rkt")
 
 (provide
  make-parser-table
  make-parser
  parse)
 
-(define current-name-seqs
-  (make-parameter (make-hasheq)))
-
-(define (next-name id)
-  (define seqs (current-name-seqs))
-  (hash-update! seqs id add1 0)
-  (string->symbol (format "~a_~a" id (hash-ref seqs id))))
-
 (define (parse table parser in)
   (define res
     (parameterize ([current-name-seqs (make-hasheq)])
       (parse-expr in table parser)))
-  (if (ok? res)
-      (ok-v res)
-      (error parser (format "parse failed~n ~a" (err-message res)))))
+  (match res
+    [(ok v) v]
+    [(err message)
+     (error parser (format "parse failed~n ~a" message))]))
 
 (define (make-parser-table)
   (make-hasheq
@@ -236,27 +231,3 @@
 (define parse-i64   (make-parse-int 'i64 8 #t))
 (define parse-i64le (make-parse-int 'i64 8 #t #f))
 (define parse-i64be (make-parse-int 'i64 8 #t #t))
-
-(struct ok (v) #:transparent)
-(struct err (message) #:transparent)
-
-(define (make-err in message . args)
-  (define filename (object-name in))
-  (define-values (line col pos)
-    (port-next-location in))
-  (define formatted-message
-    (apply format message args))
-  (err
-   (if (and line col)
-       (format "~a~n  in: ~a~n  line: ~a~n  col: ~a" formatted-message filename line col)
-       (format "~a~n  in: ~a~n  position: ~a" formatted-message filename pos))))
-
-(define (res-bind res proc)
-  (cond
-    [(ok? res) (proc (ok-v res))]
-    [else res]))
-
-(define (err-bind res proc)
-  (cond
-    [(ok? res) res]
-    [else (proc (err-message res))]))

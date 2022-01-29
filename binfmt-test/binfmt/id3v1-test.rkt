@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require rackunit
+(require racket/port
+         rackunit
          "common.rkt"
          "id3v1.b")
 
@@ -20,3 +21,13 @@
 (check-equal? (ref-bytes 'year_1 t)    #"2005")
 (check-equal? (ref-bytes 'comment_1 t) #"Take on O Mio Babbino Caro!   ")
 (check-equal? (ref       'genre_1 t)   103)
+
+(check-equal?
+ (call-with-output-bytes
+  (lambda (out)
+    (un-id3 t out)))
+ (call-with-input-file "creativecommonssong.mp3"
+   (lambda (in)
+     (file-position in eof)
+     (file-position in (- (file-position in) 128))
+     (read-bytes 128 in))))
