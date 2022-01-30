@@ -1,6 +1,9 @@
 #lang racket/base
 
-(require racket/format
+(require (for-syntax racket/base
+                     racket/syntax
+                     syntax/parse)
+         racket/format
          racket/match
          racket/port
          "name.rkt"
@@ -158,6 +161,12 @@
 (define (~byte n)
   (~a "0x" (~r #:base 16 #:min-width 2 #:pad-string "0" n)))
 
+(provide
+ parse-byte
+ parse-char
+ parse-eof
+ parse-nul)
+
 (define (parse-byte in n)
   (match (read-byte in)
     [(== n) (ok n)]
@@ -188,12 +197,24 @@
     [(< (bytes-length bs) len) (make-err in "not enough bytes for ~a" who)]
     [else (ok (floating-point-bytes->real bs big-endian?))]))
 
-(define parse-f32   (make-parse-flt 'f32 4))
-(define parse-f64   (make-parse-flt 'f64 8))
-(define parse-f32le (make-parse-flt 'f32 4 #f))
-(define parse-f64le (make-parse-flt 'f64 8 #f))
-(define parse-f32be (make-parse-flt 'f32 4 #t))
-(define parse-f64be (make-parse-flt 'f64 8 #t))
+(define-syntax (define-flt-parsers stx)
+  (syntax-parse stx
+    [(_ [id:id len (~optional big-endian?)] ...)
+     #:with (parser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                              (format-id stx "parse-~a" stx))
+     #'(begin
+         (provide parser-id ...)
+         (define parser-id
+           (make-parse-flt 'id len (~? big-endian? (system-big-endian?))))
+         ...)]))
+
+(define-flt-parsers
+  [f32   4]
+  [f64   8]
+  [f32le 4 #f]
+  [f64le 8 #f]
+  [f32be 4 #t]
+  [f64be 8 #t])
 
 (define ((make-parse-byte who signed?) in)
   (define n (read-byte in))
@@ -202,6 +223,10 @@
      (make-err in "expected '~a' but found EOF" who)]
     [else
      (ok (if (and signed? (> n 127)) (- n 256) n))]))
+
+(provide
+ parse-u8
+ parse-i8)
 
 (define parse-u8 (make-parse-byte 'u8 #f))
 (define parse-i8 (make-parse-byte 'i8 #t))
@@ -213,21 +238,33 @@
     [(< (bytes-length bs) len) (make-err in "not enough bytes for ~a" who)]
     [else (ok (integer-bytes->integer bs signed? big-endian?))]))
 
-(define parse-u16   (make-parse-int 'u16 2 #f))
-(define parse-u16le (make-parse-int 'u16 2 #f #f))
-(define parse-u16be (make-parse-int 'u16 2 #f #t))
-(define parse-u32   (make-parse-int 'u32 4 #f))
-(define parse-u32le (make-parse-int 'u32 4 #f #f))
-(define parse-u32be (make-parse-int 'u32 4 #f #t))
-(define parse-u64   (make-parse-int 'u64 8 #f))
-(define parse-u64le (make-parse-int 'u64 8 #f #f))
-(define parse-u64be (make-parse-int 'u64 8 #f #t))
-(define parse-i16   (make-parse-int 'i16 2 #t))
-(define parse-i16le (make-parse-int 'i16 2 #t #f))
-(define parse-i16be (make-parse-int 'i16 2 #t #t))
-(define parse-i32   (make-parse-int 'i32 4 #t))
-(define parse-i32le (make-parse-int 'i32 4 #t #f))
-(define parse-i32be (make-parse-int 'i32 4 #t #t))
-(define parse-i64   (make-parse-int 'i64 8 #t))
-(define parse-i64le (make-parse-int 'i64 8 #t #f))
-(define parse-i64be (make-parse-int 'i64 8 #t #t))
+(define-syntax (define-int-parsers stx)
+  (syntax-parse stx
+    [(_ [id:id len signed? (~optional big-endian?)] ...)
+     #:with (parser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                              (format-id stx "parse-~a" stx))
+     #'(begin
+         (provide parser-id ...)
+         (define parser-id
+           (make-parse-int 'id len signed? (~? big-endian? (system-big-endian?))))
+         ...)]))
+
+(define-int-parsers
+  [u16   2 #f]
+  [u16le 2 #f #f]
+  [u16be 2 #f #t]
+  [u32   4 #f]
+  [u32le 4 #f #f]
+  [u32be 4 #f #t]
+  [u64   8 #f]
+  [u64le 8 #f #f]
+  [u64be 8 #f #t]
+  [i16   2 #t]
+  [i16le 2 #t #f]
+  [i16be 2 #t #t]
+  [i32   4 #t]
+  [i32le 4 #t #f]
+  [i32be 4 #t #t]
+  [i64   8 #t]
+  [i64le 8 #t #f]
+  [i64be 8 #t #t])

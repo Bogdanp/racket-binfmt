@@ -13,47 +13,33 @@
   (port-count-lines! in)
   (define mod
     (let loop ([foreign-parsers null]
-               [foreign-unparsers null]
-               [defs null])
+               [definitions null])
       (match (lexer-peek l)
         [(token 'eof _ _ _ _)
          `((foreign-parsers ,@(reverse foreign-parsers))
-           (foreign-unparsers ,@(reverse foreign-unparsers))
-           (definitions ,@(reverse defs)))]
+           (definitions ,@(reverse definitions)))]
         [(token 'keyword 'foreign-parsers _ _ _)
-         (loop (cons (parse-foreign-parsers l) foreign-parsers) foreign-unparsers defs)]
-        [(token 'keyword 'foreign-unparsers _ _ _)
-         (loop foreign-parsers (cons (parse-foreign-unparsers l) foreign-unparsers) defs)]
+         (loop (cons (parse-foreign-parsers l) foreign-parsers) definitions)]
         [_
-         (loop foreign-parsers foreign-unparsers (cons (parse-def l) defs))])))
+         (loop foreign-parsers (cons (parse-def l) definitions))])))
   (datum->syntax #f mod (srcloc (object-name in) 1 0 1 #f)))
 
 (define (parse-foreign-parsers l)
   (expect 'parse-foreign-parsers l 'keyword 'foreign-parsers)
   (define mod (stx l (expect 'parse-foreign-parsers l 'string)))
-  (let loop ([ids null])
+  (let loop ([pairs null])
     (match (lexer-peek l)
       [(token 'semicolon _ _ _ _)
-       (begin0 `(foreign-parsers ,mod ,(reverse ids))
+       (begin0 `(foreign-parsers ,mod ,(reverse pairs))
          (void (expect 'parse-foreign-parsers l 'semicolon)))]
-      [_ (loop (cons (stx l (expect 'parse-foreign-parsers l 'ident)) ids))])))
+      [_ (loop (cons (parse-foreign-parser-pair l) pairs))])))
 
-(define (parse-foreign-unparsers l)
-  (expect 'parse-foreign-unparsers l 'keyword 'foreign-unparsers)
-  (define mod (stx l (expect 'parse-foreign-unparsers l 'string)))
-  (let loop ([binds null])
-    (match (lexer-peek l)
-      [(token 'semicolon _ _ _ _)
-       (begin0 `(foreign-unparsers ,mod ,(reverse binds))
-         (void (expect 'parse-foreign-unparsers l 'semicolon)))]
-      [_ (loop (cons (parse-foreign-unparser-bind l) binds))])))
-
-(define (parse-foreign-unparser-bind l)
-  (expect 'parse-foreign-unparser-bind l 'lbrace)
-  (define uid (stx l (expect 'parse-foreign-unparser-bind l 'ident)))
-  (define pid (stx l (expect 'parse-foreign-unparser-bind l 'ident)))
+(define (parse-foreign-parser-pair l)
+  (expect 'parse-foreign-parser-pair l 'lbrace)
+  (define uid (stx l (expect 'parse-foreign-parser-pair l 'ident)))
+  (define pid (stx l (expect 'parse-foreign-parser-pair l 'ident)))
   (begin0 `(,uid ,pid)
-    (expect 'parse-foreign-unparser-bind l 'rbrace)))
+    (expect 'parse-foreign-parser-pair l 'rbrace)))
 
 (define (parse-def l)
   (define id (stx l (expect 'parse-definition l 'ident)))

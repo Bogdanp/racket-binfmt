@@ -1,6 +1,9 @@
 #lang racket/base
 
-(require racket/match
+(require (for-syntax racket/base
+                     racket/syntax
+                     syntax/parse)
+         racket/match
          racket/port
          "res.rkt")
 
@@ -149,6 +152,10 @@
          (unparse-star out (cdr v) table expr context)))
       (unparse-expr out v table expr context)))
 
+(provide
+ unparse-eof
+ unparse-nul)
+
 (define (unparse-eof _out v)
   (match v
     [(? eof-object?) (ok v)]
@@ -167,12 +174,24 @@
        (write-bytes (real->floating-point-bytes v len big-endian?) out))]
     [else (err (format "expected '~a' but found ~s" who v))]))
 
-(define unparse-f32   (make-unparse-flt 'f32 4))
-(define unparse-f64   (make-unparse-flt 'f64 8))
-(define unparse-f32le (make-unparse-flt 'f32 4 #f))
-(define unparse-f64le (make-unparse-flt 'f64 8 #f))
-(define unparse-f32be (make-unparse-flt 'f32 4 #t))
-(define unparse-f64be (make-unparse-flt 'f64 8 #t))
+(define-syntax (define-flt-unparsers stx)
+  (syntax-parse stx
+    [(_ [id:id len (~optional big-endian?)] ...)
+     #:with (unparser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                                (format-id stx "unparse-~a" stx))
+     #'(begin
+         (provide unparser-id ...)
+         (define unparser-id
+           (make-unparse-flt 'id len (~? big-endian? (system-big-endian?))))
+         ...)]))
+
+(define-flt-unparsers
+  [f32   4]
+  [f64   8]
+  [f32le 4 #f]
+  [f64le 8 #f]
+  [f32be 4 #t]
+  [f64be 8 #t])
 
 (define ((make-unparse-int who len signed? [big-endian? (system-big-endian?)]) out v)
   (cond
@@ -181,23 +200,35 @@
        (write-bytes (integer->integer-bytes v len signed? big-endian?) out))]
     [else (err (format "expected '~a' but found ~s" who v))]))
 
-(define unparse-u8    (make-unparse-int 'u8  1 #f))
-(define unparse-u16   (make-unparse-int 'u16 2 #f))
-(define unparse-u16le (make-unparse-int 'u16 2 #f #f))
-(define unparse-u16be (make-unparse-int 'u16 2 #f #t))
-(define unparse-u32   (make-unparse-int 'u32 4 #f))
-(define unparse-u32le (make-unparse-int 'u32 4 #f #f))
-(define unparse-u32be (make-unparse-int 'u32 4 #f #t))
-(define unparse-u64   (make-unparse-int 'u64 8 #f))
-(define unparse-u64le (make-unparse-int 'u64 8 #f #f))
-(define unparse-u64be (make-unparse-int 'u64 8 #f #t))
-(define unparse-i8    (make-unparse-int 'i8  1 #t))
-(define unparse-i16   (make-unparse-int 'i16 2 #t))
-(define unparse-i16le (make-unparse-int 'i16 2 #t #f))
-(define unparse-i16be (make-unparse-int 'i16 2 #t #t))
-(define unparse-i32   (make-unparse-int 'i32 4 #t))
-(define unparse-i32le (make-unparse-int 'i32 4 #t #f))
-(define unparse-i32be (make-unparse-int 'i32 4 #t #t))
-(define unparse-i64   (make-unparse-int 'i64 8 #t))
-(define unparse-i64le (make-unparse-int 'i64 8 #t #f))
-(define unparse-i64be (make-unparse-int 'i64 8 #t #t))
+(define-syntax (define-int-unparsers stx)
+  (syntax-parse stx
+    [(_ [id:id len signed? (~optional big-endian?)] ...)
+     #:with (unparser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                                (format-id stx "unparse-~a" stx))
+     #'(begin
+         (provide unparser-id ...)
+         (define unparser-id
+           (make-unparse-int 'id len signed? (~? big-endian? (system-big-endian?))))
+         ...)]))
+
+(define-int-unparsers
+  [u8    1 #f]
+  [u16   2 #f]
+  [u16le 2 #f #f]
+  [u16be 2 #f #t]
+  [u32   4 #f]
+  [u32le 4 #f #f]
+  [u32be 4 #f #t]
+  [u64   8 #f]
+  [u64le 8 #f #f]
+  [u64be 8 #f #t]
+  [i8    1 #t]
+  [i16   2 #t]
+  [i16le 2 #t #f]
+  [i16be 2 #t #t]
+  [i32   4 #t]
+  [i32le 4 #t #f]
+  [i32be 4 #t #t]
+  [i64   8 #t]
+  [i64le 8 #t #f]
+  [i64be 8 #t #t])

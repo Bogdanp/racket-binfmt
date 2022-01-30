@@ -31,12 +31,8 @@
            #:with e #'(list (cons 'sub-e.id sub-e.e) ...)))
 
 (define-syntax-class foreign-parser
-  (pattern ({~datum foreign-parsers} mod (id:id ...))
-           #:with req #'(require (only-in mod id ...))))
-
-(define-syntax-class foreign-unparser
-  (pattern ({~datum foreign-unparsers} mod ({id:id pid:id} ...))
-           #:with req #'(require (only-in mod id ...))))
+  (pattern ({~datum foreign-parsers} mod ({id:id uid:id} ...))
+           #:with spec #'(only-in mod id ... uid ...)))
 
 (define-syntax-class definition
   (pattern ({~datum definition} id (({~datum alt} alt:alt) ...))
@@ -46,17 +42,16 @@
 (define (compile in)
   (syntax-parse (parse in)
     [(({~datum foreign-parsers} fp:foreign-parser ...)
-      ({~datum foreign-unparsers} fu:foreign-unparser ...)
       ({~datum definitions} d:definition ...))
      #'(module parser racket/base
          (require (prefix-in r: binfmt/runtime))
-         fp.req ... fu.req ...
+         (require fp.spec ...)
          (define *parsers* (r:make-parser-table))
          (define *unparsers* (r:make-unparser-table))
          (hash-set! *parsers* 'd.id (r:make-parser *parsers* d.alt-e ...)) ...
          (hash-set! *parsers* 'fp.id fp.id) ... ...
          (hash-set! *unparsers* 'd.id (r:make-unparser *unparsers* d.alt-e ...)) ...
-         (hash-set! *unparsers* 'fu.pid fu.id) ... ...
+         (hash-set! *unparsers* 'fp.id fp.uid) ... ...
          (define (d.id [in (current-input-port)]) (r:parse *parsers* 'd.id in)) ...
          (define (d.unid v [out (current-output-port)]) (r:unparse *unparsers* 'd.id out v)) ...
-         (provide d.id ... d.unid ... fp.id ... ... fu.id ... ...))]))
+         (provide d.id ... d.unid ... fp.id ... ... fp.uid ... ...))]))
