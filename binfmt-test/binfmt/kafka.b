@@ -1,7 +1,5 @@
 #lang binfmt
 
-RequestOrResponse = Size RequestOrResponseMessage;
-RequestOrResponseMessage = RequestMessage | ResponseMessage;
 Size = i32be;
 
 RequestHeader = APIKey APIVersion CorrelationID ClientID;
