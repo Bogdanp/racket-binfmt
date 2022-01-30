@@ -25,7 +25,8 @@
 
 (define (make-parser-table)
   (make-hasheq
-   `((eof   . ,parse-eof)
+   `((TODO  . ,parse-TODO)
+     (eof   . ,parse-eof)
      (nul   . ,parse-nul)
      (f32   . ,parse-f32)
      (f64   . ,parse-f64)
@@ -158,14 +159,17 @@
    (lambda (v)
      (ok (cons v (ok-v (parse-star in table expr context)))))))
 
-(define (~byte n)
-  (~a "0x" (~r #:base 16 #:min-width 2 #:pad-string "0" n)))
+(define (parse-TODO in)
+  (make-err in "TODO: parser not implemented"))
 
 (provide
  parse-byte
  parse-char
  parse-eof
  parse-nul)
+
+(define (~byte n)
+  (~a "0x" (~r #:base 16 #:min-width 2 #:pad-string "0" n)))
 
 (define (parse-byte in n)
   (match (read-byte in)
