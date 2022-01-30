@@ -57,6 +57,8 @@
     [#\{ (make-token 'lbrace    (read-char in))]
     [#\} (make-token 'rbrace    (read-char in))]
     [#\' (make-token 'char      (read-literal-char in))]
+    [#\" (make-token 'string    (read-literal-string in))]
+    [#\@ (make-token 'keyword   (read-keyword in))]
     [(app char-general-category (or 'll 'lu))
      (make-token 'ident (read-ident in))]
     [(app char-general-category 'nd)
@@ -68,6 +70,36 @@
   (consume 'read-literal-char in #\')
   (begin0 (read-char in)
     (consume 'read-literal-char in #\')))
+
+(define (read-literal-string in)
+  (consume 'read-literal-string in #\")
+  (call-with-output-string
+   (lambda (out)
+     (let loop ([escaped? #f])
+       (match (read-char in)
+         [(? eof-object?)
+          (oops! 'read-literal-string "unexpected EOF while reading string literal" in)]
+         [#\\
+          (cond
+            [escaped?
+             (write-char #\\ out)
+             (loop #f)]
+            [else
+             (loop #t)])]
+         [#\"
+          (cond
+            [escaped?
+             (write-char #\" out)
+             (loop #f)]
+            [else
+             (void)])]
+         [c
+          (write-char c out)
+          (loop #f)])))))
+
+(define (read-keyword in)
+  (consume 'read-keyword in #\@)
+  (read-ident in))
 
 (define (read-ident in)
   (string->symbol

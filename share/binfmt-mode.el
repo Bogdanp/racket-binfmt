@@ -6,7 +6,8 @@
   (require 'rx))
 
 (defvar binfmt-font-lock-keywords
-  `(("\\(?:^[[:space:]]*\\(\\(?:[[:alnum:]]\\|[[:digit:]]\\|_\\)+\\(?:[[:alnum:]]\\|[[:digit:]]\\|[_-]\\)*\\)[[:space:]]*=\\)" 1 font-lock-function-name-face)
+  `(("\\(@foreign-\\(un\\)?parsers\\)" 1 font-lock-preprocessor-face)
+    ("\\(?:^[[:space:]]*\\(\\(?:[[:alnum:]]\\|[[:digit:]]\\|_\\)+\\(?:[[:alnum:]]\\|[[:digit:]]\\|[_-]\\)*\\)[[:space:]]*=\\)" 1 font-lock-function-name-face)
     ("\\(?:\\_<\\(=\\)\\_>\\)" 1 font-lock-builtin-face)
     ("\\(?:\\_<\\(|\\)\\_>\\)" 1 font-lock-warning-face))
   "Font lock keywords for binfmt-mode.")
