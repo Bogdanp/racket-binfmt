@@ -5,6 +5,7 @@
                      syntax/parse)
          racket/match
          racket/port
+         "name.rkt"
          "res.rkt")
 
 (provide
@@ -70,21 +71,28 @@
           (loop (cdr alts) (cons message errs))))])))
 
 (define (unparse-alt out v table exprs)
-  (cond
-    [(= (length exprs) 1)
-     (unparse-expr out v table (cdar exprs))]
-    [else
-     (let loop ([exprs exprs] [vals v])
-       (cond
-         [(null? exprs) (ok v)]
-         [else
-          (match-define (cons _expr-id expr-e)
-            (car exprs))
-          (res-bind
-           (unparse-expr out (cdar vals) table expr-e v)
-           (lambda (_v)
-             (loop (cdr exprs)
-                   (cdr vals))))]))]))
+  (parameterize ([current-name-seqs (make-hasheq)])
+    (cond
+      [(= (length exprs) 1)
+       (unparse-expr out v table (cdar exprs))]
+      [else
+       (let loop ([exprs exprs] [vals v])
+         (cond
+           [(null? exprs) (ok v)]
+           [else
+            (match-define (cons expr-id expr-e)
+              (car exprs))
+            (define val-id (caar vals))
+            (define expected-name (next-name expr-id))
+            (cond
+              [(eq? val-id expected-name)
+               (res-bind
+                (unparse-expr out (cdar vals) table expr-e v)
+                (lambda (_v)
+                  (loop (cdr exprs)
+                        (cdr vals))))]
+              [else
+               (err (format "field name mismatch~n  expected: ~a~n  found: ~a~n  in: ~e" expected-name val-id vals))])]))])))
 
 (define (unparse-expr out v table expr [context null])
   (match expr
