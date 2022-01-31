@@ -102,5 +102,7 @@ The following parsers are built-in:
   @item{@litchar{u8}, @litchar{u16}, @litchar{u32}, @litchar{u64}, @litchar{u16le}, @litchar{u32le}, @litchar{u64le}, @litchar{u16be}, @litchar{u32be}, @litchar{u64be}}
   @item{@litchar{i8}, @litchar{i16}, @litchar{i32}, @litchar{i64}, @litchar{i16le}, @litchar{i32le}, @litchar{i64le}, @litchar{i16be}, @litchar{i32be}, @litchar{i64be}}
   @item{@litchar{f32}, @litchar{f64}, @litchar{f32le}, @litchar{f64le}, @litchar{f32be}, @litchar{f64be}}
+  @item{@litchar{uvarint32}, @litchar{uvarint64}}
+  @item{@litchar{varint32}, @litchar{varint64}}
   @item{@litchar{nul}, @litchar{eof}}
 ]

@@ -272,3 +272,50 @@
   [i64   8 #t]
   [i64le 8 #t #f]
   [i64be 8 #t #t])
+
+(define (un-zigzag n)
+  (define x (arithmetic-shift n -1))
+  (cond
+    [(zero? (bitwise-and n 1)) x]
+    [else (bitwise-not x)]))
+
+(define ((make-parse-varint who bits signed?) in)
+  (define n
+    (let/cc fail
+      (let loop ([s 0])
+        (define b
+          (read-byte in))
+        (cond
+          [(eof-object? b) (fail b)]
+          [(zero? (bitwise-and b #x80)) (arithmetic-shift b s)]
+          [else (+ (arithmetic-shift (bitwise-and b #x7F) s)
+                   (loop (+ s 7)))]))))
+  (cond
+    [(eof-object? n)
+     (make-err in "expected '~a' but found EOF" who)]
+    [else
+     (define hi
+       (case bits
+         [(32) #xFFFFFFFF]
+         [(64) #xFFFFFFFFFFFFFFFF]))
+     (cond
+       [(> n hi) (make-err in "~a too large: ~a" who n)]
+       [signed? (ok (un-zigzag n))]
+       [else (ok n)])]))
+
+(define-syntax (define-varint-parsers stx)
+  (syntax-parse stx
+    [(_ [id:id bits signed?] ...)
+     #:with (parser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                              (format-id stx "parse-~a" stx))
+     #'(begin
+         (provide parser-id ...)
+         (define parser-id
+           (make-parse-varint 'id bits signed?))
+         ...)]))
+
+(define-varint-parsers
+  [uvarint32 32 #f]
+  [uvarint64 64 #f]
+  [varint32  32 #t]
+  [varint64  64 #t])

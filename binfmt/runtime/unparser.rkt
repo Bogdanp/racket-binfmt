@@ -240,3 +240,44 @@
   [i64   8 #t]
   [i64le 8 #t #f]
   [i64be 8 #t #t])
+
+(define (reinterpret bits n)
+  (define len (quotient bits 8))
+  (integer-bytes->integer
+   (integer->integer-bytes n len #t #t)
+   #f #t))
+
+(define ((make-unparse-varint _who bits signed?) out v)
+  (let ([v (if signed?
+               (bitwise-xor
+                (arithmetic-shift v 1)
+                (arithmetic-shift v (- (sub1 bits))))
+               (if (< v 0)
+                   (reinterpret bits v)
+                   v))])
+    (define bs
+      (let loop ([bs null] [n v])
+        (define-values (q r)
+          (quotient/remainder n #x80))
+        (if (zero? q)
+            (apply bytes (reverse (cons r bs)))
+            (loop (cons (bitwise-ior r #x80 r) bs) q))))
+    (begin0 (ok v)
+      (write-bytes bs out))))
+
+(define-syntax (define-varint-unparsers stx)
+  (syntax-parse stx
+    [(_ [id:id bits signed?] ...)
+     #:with (unparser-id ...) (for/list ([stx (in-list (syntax-e #'(id ...)))])
+                                (format-id stx "unparse-~a" stx))
+     #'(begin
+         (provide unparser-id ...)
+         (define unparser-id
+           (make-unparse-varint 'id bits signed?))
+         ...)]))
+
+(define-varint-unparsers
+  [uvarint32 32 #f]
+  [uvarint64 64 #f]
+  [varint32  32 #t]
+  [varint64  64 #t])
