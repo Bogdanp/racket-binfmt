@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/bnf
+          scribble/example
           (for-label binfmt
                      binfmt/runtime
                      racket/base
@@ -30,15 +31,59 @@ comment = u8{30};
 genre   = u8;
 }|
 
-Assuming this is saved in a file called "id3v1.b", you can import it
-from Racket and apply any of the definitions to an @tech[#:doc '(lib
-"scribblings/reference/reference.scrbl")]{input port}
-in order to parse its contents:
+@(define (reftech . text)
+  (apply tech #:doc '(lib "scribblings/reference/reference.scrbl") text))
 
-@racketblock[
+Assuming this is saved in a file called "id3v1.b", you can import it
+from Racket and apply any of the definitions to an @reftech{input
+port} in order to parse its contents:
+
+@(define ev (make-base-eval))
+
+@examples[
+  #:eval ev
+  #:label #f
   (require "id3v1.b")
+
+  (code:line)
+  (code:comment "parse just the magic header")
   (magic (open-input-bytes #"TAG"))
-  (id3 (open-input-bytes #"TAG..."))
+
+  (code:line)
+  (code:comment "parse an entire ID3v1 tag with errors")
+  (eval:error
+   (id3 (open-input-bytes #"TAG...")))
+
+  (code:line)
+  (code:comment "parse a valid tag")
+  (define data
+   (bytes-append
+    #"TAGCreative Commons Song         Improbulus                    N"
+    #"/A                           2005Take on O Mio Babbino Caro!   g"))
+  (define tree
+    (id3 (open-input-bytes data)))
+
+  (code:line)
+  (code:comment "inspect the tree")
+  (map car tree)
+  (apply bytes (cdr (assq 'title_1 tree)))
+]
+
+Every definition automatically creates an @deftech{un-parser}.
+Un-parsers are functions that take a parse tree as input and serialize
+the data to an @reftech{output port}.  They are named by prepending
+@litchar{un-} to the name of a definition.
+
+@examples[
+  #:eval ev
+  #:label #f
+  (require racket/port)
+  (define bs
+    (call-with-output-bytes
+     (lambda (out)
+       (un-id3 tree out))))
+  (for ([n (in-range 0 (bytes-length bs) 64)])
+    (println (subbytes bs n (+ n 64))))
 ]
 
 
