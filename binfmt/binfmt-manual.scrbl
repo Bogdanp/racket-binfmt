@@ -39,34 +39,48 @@ from Racket and apply any of the definitions to an @reftech{input
 port} in order to parse its contents:
 
 @(define ev (make-base-eval))
+@(ev '(require racket/list racket/port))
+@(define-syntax-rule (interactions e ...)
+  (examples
+   #:eval ev
+   #:label #f
+   e ...))
 
-@examples[
-  #:eval ev
-  #:label #f
+@interactions[
   (require "id3v1.b")
+]
 
-  (code:line)
-  (code:comment "parse just the magic header")
+You can parse the magic header by itself:
+
+@interactions[
   (magic (open-input-bytes #"TAG"))
+]
 
-  (code:line)
-  (code:comment "parse an entire ID3v1 tag with errors")
-  (eval:error
-   (id3 (open-input-bytes #"TAG...")))
+Or a full tag:
 
-  (code:line)
-  (code:comment "parse a valid tag")
+@interactions[
   (define data
    (bytes-append
     #"TAGCreative Commons Song         Improbulus                    N"
     #"/A                           2005Take on O Mio Babbino Caro!   g"))
   (define tree
     (id3 (open-input-bytes data)))
+]
 
-  (code:line)
-  (code:comment "inspect the tree")
+And inspect the resulting parse tree:
+
+@interactions[
   (map car tree)
-  (apply bytes (cdr (assq 'title_1 tree)))
+  (define ref (compose1 cdr assq))
+  (take (ref 'title_1 tree) 8)
+  (apply bytes (ref 'title_1 tree))
+]
+
+Finally, parsing invalid data results in a syntax error:
+
+@interactions[
+  (eval:error
+   (id3 (open-input-bytes #"TAG...")))
 ]
 
 Every definition automatically creates an @deftech{un-parser}.
@@ -74,10 +88,7 @@ Un-parsers are functions that take a parse tree as input and serialize
 the data to an @reftech{output port}.  They are named by prepending
 @litchar{un-} to the name of a definition.
 
-@examples[
-  #:eval ev
-  #:label #f
-  (require racket/port)
+@interactions[
   (define bs
     (call-with-output-bytes
      (lambda (out)
