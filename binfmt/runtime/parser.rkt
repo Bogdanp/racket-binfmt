@@ -116,10 +116,10 @@
      (parse-repeat in table e n context)]
     [`(repeat ,e ,id)
      (match (assq id context)
-       [(cons _ (? exact-nonnegative-integer? n))
+       [(cons _ (? exact-integer? n))
         (parse-repeat in table e n context)]
        [(cons _ v)
-        (make-err in "context var ~a contains ~a, which is not a positive integer" id v)]
+        (make-err in "context var ~a contains ~a, which is not an integer" id v)]
        [_
         (make-err in "failed to look up ~a from context" id)])]
     [`(plus ,e)
@@ -135,7 +135,7 @@
          (hash-ref table expr #f)))
   (let loop ([n n] [results null])
     (cond
-      [(zero? n)
+      [(<= n 0)
        (ok (reverse results))]
       [else
        (define res
