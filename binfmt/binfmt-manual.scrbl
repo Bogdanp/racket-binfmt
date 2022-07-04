@@ -152,7 +152,7 @@ strlen = i8;
 }|
 
 Negative length values are allowed, in which case they're treated the
-same as @racket{0}.  The parser above would parse @racket#{#"\xFF"} to
+same as @racket[0].  The parser above would parse @racket[#"\xFF"] to
 an empty string.
 
 The following parsers are built-in:
