@@ -142,14 +142,18 @@ collapse to the result of the @nonterm{expr}.
 The @nonterm{repeat} syntax can either repeat a parser an exact number
 of times or it can repeat it based on the result of a previous parser
 within the same @nonterm{alt}.  For example, the following parser
-parses a @litchar{u8} to determine the length of a string, then parses
+parses a @litchar{i8} to determine the length of a string, then parses
 that number of @litchar{u8}s following it.
 
 @codeblock|{
 #lang binfmt
 string = strlen u8{strlen_1};
-strlen = u8;
+strlen = i8;
 }|
+
+Negative length values are allowed, in which case they're treated the
+same as @racket{0}.  The parser above would parse @racket#{#"\xFF"} to
+an empty string.
 
 The following parsers are built-in:
 
