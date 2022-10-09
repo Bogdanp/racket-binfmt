@@ -122,10 +122,10 @@
      (unparse-repeat out v table e n context)]
     [`(repeat ,e ,id)
      (match (assq id context)
-       [(cons _ (? exact-nonnegative-integer? n))
+       [(cons _ (? exact-integer? n))
         (unparse-repeat out v table e n context)]
        [(cons _ v)
-        (err (format "context var ~a contains ~a, which is not a positive integer" id v))]
+        (err (format "context var ~a contains ~a, which is not an integer" id v))]
        [_
         (err (format "failed to look up ~a from context" id))])]
     [`(plus ,e)
@@ -140,7 +140,7 @@
     (and (symbol? expr)
          (hash-ref table expr #f)))
   (let loop ([n n] [v v])
-    (if (zero? n)
+    (if (<= n 0)
         (ok v)
         (res-bind
          (if cached-unparser
