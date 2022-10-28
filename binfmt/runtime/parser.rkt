@@ -6,6 +6,7 @@
          racket/format
          racket/match
          racket/port
+         (submod "error.rkt" private)
          "name.rkt"
          "res.rkt")
 
@@ -21,7 +22,7 @@
   (match res
     [(ok v) v]
     [(err message)
-     (error parser (format "parse failed~n ~a" message))]))
+     (oops parser "parse failed~n ~a" message)]))
 
 (define (make-parser-table)
   (make-hasheq
@@ -79,8 +80,10 @@
        (err-bind
         (parse-alt in table (car alts))
         (lambda (message)
-          (file-position in pos)
-          (loop (cdr alts) (cons message errs))))])))
+          (res-bind
+           (set-file-position in pos)
+           (lambda (_)
+             (loop (cdr alts) (cons message errs))))))])))
 
 (define (parse-alt in table exprs)
   (parameterize ([current-name-seqs (make-hasheq)])
@@ -152,8 +155,10 @@
     (define res (parse-expr in table expr context))
     (cond
       [(err? res)
-       (file-position in pos)
-       (ok (reverse results))]
+       (res-bind
+        (set-file-position in pos)
+        (lambda (_)
+          (ok (reverse results))))]
       [else
        (loop (cons (ok-v res) results))])))
 
@@ -323,3 +328,12 @@
   [uvarint64 64 #f]
   [varint32  32 #t]
   [varint64  64 #t])
+
+;; The arity 2 variant of `file-position' may fail on anything but
+;; file and string ports, so this monadifies that operation to avoid
+;; raising an exception in those cases.  This means that other types
+;; of ports don't support backtracking.
+(define (set-file-position p pos)
+  (with-handlers ([exn:fail? (λ (e) (err (exn-message e)))])
+    (begin0 (ok pos)
+      (file-position p pos))))

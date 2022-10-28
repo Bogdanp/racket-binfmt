@@ -6,5 +6,6 @@
     (provide (all-from-out mod ...))))
 
 (reprovide
+ "runtime/error.rkt"
  "runtime/parser.rkt"
  "runtime/unparser.rkt")

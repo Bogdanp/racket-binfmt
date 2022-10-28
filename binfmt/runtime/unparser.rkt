@@ -5,6 +5,7 @@
                      syntax/parse)
          racket/match
          racket/port
+         (submod "error.rkt" private)
          "name.rkt"
          "res.rkt")
 
@@ -17,7 +18,7 @@
   (match (unparse-expr out v table unparser)
     [(ok _) (void)]
     [(err message)
-     (error unparser (format "unparse failed~n ~a" message))]))
+     (oops unparser "unparse failed~n ~a" message)]))
 
 (define (make-unparser-table)
   (make-hasheq

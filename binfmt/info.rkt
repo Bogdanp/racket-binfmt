@@ -1,6 +1,6 @@
 #lang info
 
-(define version "0.3")
+(define version "0.4")
 (define collection "binfmt")
 (define deps '("base"))
 (define build-deps '("racket-doc" "scribble-lib"))

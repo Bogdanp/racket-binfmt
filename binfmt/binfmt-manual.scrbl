@@ -166,3 +166,22 @@ The following parsers are built-in:
   @item{@litchar{varint32}, @litchar{varint64}}
   @item{@litchar{nul}, @litchar{eof}}
 ]
+
+Parsers for @nonterm{alt}s may backtrack, but backtracking is only
+supported on file and string @reftech{input ports}.  All other types
+of ports (eg. pipes and custom ports that don't support setting a file
+position) cause backtracking to fail with a parsing error.
+
+On parse and unparse failure, an @racket[exn:fail:binfmt?] error is
+raised.
+
+@section{Reference}
+@defmodule[binfmt/runtime]
+
+@defproc[(exn:fail:binfmt? [v any/c]) boolean?]{
+  Returns @racket[#t] when @racket[v] is a binfmt error.
+}
+
+@defproc[(exn:fail:binfmt-id [e exn:fail:binfmt?]) symbol?]{
+  Returns the id of the parser or unparser that failed.
+}
