@@ -5,4 +5,4 @@
 (define collection "binfmt")
 (define deps '("base"))
 (define build-deps '("racket-doc" "scribble-lib"))
-(define scribblings '(("binfmt-manual.scrbl")))
+(define scribblings '(("binfmt-manual.scrbl" () (parsing-library))))
