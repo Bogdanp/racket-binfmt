@@ -288,17 +288,17 @@
     [(zero? (bitwise-and n 1)) x]
     [else (bitwise-not x)]))
 
+(define (read-uvarint in)
+  (for/fold ([res 0]
+             [ok? #f]
+             #:result (if ok? res eof))
+            ([(b idx) (in-indexed (in-input-port-bytes in))])
+    (define done? (zero? (bitwise-and b #x80)))
+    #:final done?
+    (values (+ res (arithmetic-shift (bitwise-and b #x7F) (* idx 7))) done?)))
+
 (define ((make-parse-varint who bits signed?) in)
-  (define n
-    (let/cc fail
-      (let loop ([s 0])
-        (define b
-          (read-byte in))
-        (cond
-          [(eof-object? b) (fail b)]
-          [(zero? (bitwise-and b #x80)) (arithmetic-shift b s)]
-          [else (+ (arithmetic-shift (bitwise-and b #x7F) s)
-                   (loop (+ s 7)))]))))
+  (define n (read-uvarint in))
   (cond
     [(eof-object? n)
      (make-err in "expected '~a' but found EOF" who)]
