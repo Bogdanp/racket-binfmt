@@ -3,7 +3,7 @@
 (#%declare #:unsafe)
 
 (require (for-syntax racket/base
-                     syntax/parse)
+                     syntax/parse/pre)
          racket/symbol)
 
 (provide

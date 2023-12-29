@@ -5,7 +5,7 @@
           (for-label binfmt
                      binfmt/runtime
                      racket/base
-                     racket/contract))
+                     racket/contract/base))
 
 @title{@tt{binfmt}: binary format parser generator}
 @author[(author+email "Bogdan Popa" "bogdan@defn.io")]

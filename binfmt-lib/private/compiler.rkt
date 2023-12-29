@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require racket/syntax
-         syntax/parse
+         syntax/parse/pre
          (prefix-in r: "../runtime.rkt")
          "parser.rkt")
 
